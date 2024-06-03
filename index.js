@@ -33,6 +33,32 @@ async function run() {
 
         const popularCollection = client.db("MedicalDB").collection("popular-medical-camp")
         const campsCollection = client.db("MedicalDB").collection("camps")
+        const usersCollcetion = client.db("MedicalDB").collection("users")
+
+        app.post('/users', async (req, res) => {
+            const user = req.body
+            const query = { email: user.email }
+            const existingUser = await usersCollcetion.findOne(query)
+            if (existingUser) {
+                return res.send({ message: 'user already exists', insertedId: null })
+            }
+            const result = await usersCollcetion.insertOne(user)
+            res.send(result)
+        })
+
+        // Organizer instead of admin
+        app.get('/users/organizer/:email', async (req, res) => {
+            // DOTO: verify and email check
+            const email = req.params.email
+            const query = {email: email}
+            const user = await usersCollcetion.findOne(query)
+            console.log(user)
+            let organizer = false
+            if(user){
+                organizer = user?.role === 'admin';
+            }
+            res.send({organizer})
+        })
 
         app.get('/popular-medical-camp', async (req, res) => {
             const result = await popularCollection.find().toArray()
@@ -45,16 +71,17 @@ async function run() {
             const result = await popularCollection.findOne(query)
             res.send(result)
         })
-        
-        app.post('/popular-medical-camp', async(req, res) =>{
+
+        app.post('/popular-medical-camp', async (req, res) => {
             const item = req.body
             const result = await popularCollection.insertOne(item)
             res.send(result)
+
         })
 
         app.patch('/popular-medical-camp/:id', async (req, res) => {
             const id = req.params.id
-            const query = {_id: new ObjectId(id)}
+            const query = { _id: new ObjectId(id) }
             const updateDoc = {
                 $inc: {
                     participant_count: 1
