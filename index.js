@@ -45,6 +45,12 @@ async function run() {
             const result = await popularCollection.findOne(query)
             res.send(result)
         })
+        
+        app.post('/popular-medical-camp', async(req, res) =>{
+            const item = req.body
+            const result = await popularCollection.insertOne(item)
+            res.send(result)
+        })
 
         app.patch('/popular-medical-camp/:id', async (req, res) => {
             const id = req.params.id
