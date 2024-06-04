@@ -32,7 +32,7 @@ async function run() {
         // await client.connect();
 
         const popularCollection = client.db("MedicalDB").collection("popular-medical-camp")
-        const campsCollection = client.db("MedicalDB").collection("camps")
+        const registerCampCollection = client.db("MedicalDB").collection("register-camp")
         const usersCollcetion = client.db("MedicalDB").collection("users")
 
         app.post('/users', async (req, res) => {
@@ -80,6 +80,14 @@ async function run() {
         })
 
 
+        app.get('/register-camp/:email', async(req, res)=>{
+            const email = req.email
+            const query = {email: email}
+            const result = await registerCampCollection.find(query).toArray()
+            res.send(result)
+        })
+
+
 
         app.post('/popular-medical-camp', async (req, res) => {
             const item = req.body
@@ -103,7 +111,7 @@ async function run() {
         app.post('/camps', async (req, res) => {
             const item = req.body
             console.log(item)
-            const result = await campsCollection.insertOne(item)
+            const result = await registerCampCollection.insertOne(item)
             res.send(result)
         })
 
