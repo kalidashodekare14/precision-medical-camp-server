@@ -34,6 +34,8 @@ async function run() {
         const popularCollection = client.db("MedicalDB").collection("popular-medical-camp")
         const registerCampCollection = client.db("MedicalDB").collection("register-camp")
         const usersCollcetion = client.db("MedicalDB").collection("users")
+        const feedbackCollection = client.db("MedicalDB").collection("feedback-and-rating")
+
 
         app.post('/users', async (req, res) => {
             const user = req.body
@@ -90,9 +92,9 @@ async function run() {
                     feedback: "Feedback"
                 }
             }
-            const result = await  registerCampCollection.updateOne(filter, updateDoc)
+            const result = await registerCampCollection.updateOne(filter, updateDoc)
             res.send(result)
-            
+
         })
 
 
@@ -111,6 +113,12 @@ async function run() {
             const result = await popularCollection.insertOne(item)
             res.send(result)
 
+        })
+
+        app.post('/rating-feedback', async (req, res) => {
+            const feedback = req.body
+            const result = await feedbackCollection.insertOne(feedback)
+            res.send(result)
         })
 
         app.patch('/popular-medical-camp/:id', async (req, res) => {
@@ -157,6 +165,13 @@ async function run() {
             const id = req.params.id
             const query = { _id: new ObjectId(id) }
             const result = await popularCollection.deleteOne(query)
+            res.send(result)
+        })
+
+        app.delete('/register-camp/:id', async (req, res) => {
+            const id = req.params.id
+            const query = { _id: new ObjectId(id) }
+            const result = await registerCampCollection.deleteOne(query)
             res.send(result)
         })
 
