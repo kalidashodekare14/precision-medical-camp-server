@@ -79,10 +79,27 @@ async function run() {
             res.send(result)
         })
 
+        // Organizer
+        app.patch('/register-camp/:id', async (req, res) => {
+            const camp = req.body
+            const id = req.params.id
+            const filter = { _id: new ObjectId(id) }
+            const updateDoc = {
+                $set: {
+                    confirmmation_status: "Comfirmed",
+                    feedback: "Feedback"
+                }
+            }
+            const result = await  registerCampCollection.updateOne(filter, updateDoc)
+            res.send(result)
+            
+        })
 
-        app.get('/register-camp/:email', async(req, res)=>{
+
+        // participent 
+        app.get('/register-camp/:email', async (req, res) => {
             const email = req.email
-            const query = {email: email}
+            const query = { email: email }
             const result = await registerCampCollection.find(query).toArray()
             res.send(result)
         })
@@ -124,11 +141,11 @@ async function run() {
                     camp_name: manage.camp_name,
                     healthcare_professional: manage.managehealthcare_professional,
                     date_and_time: manage.date_and_time,
-                    location: manage. location,
+                    location: manage.location,
                     camp_fees: manage.camp_fees,
                     description: manage.description,
                     image: manage.image
-                    
+
                 }
             }
             const result = await popularCollection.updateOne(filter, updateDoc)
