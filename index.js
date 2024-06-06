@@ -82,6 +82,16 @@ async function run() {
             res.send(result)
         })
 
+        app.get('/payment-history/:email', async (req, res) => {
+            const email = req.email
+            const query = {email: email}
+            const result = await paymentHistroy.find(query).toArray()
+            res.send(result)
+        })
+
+
+
+
         // Organizer
         app.patch('/register-camp/:id', async (req, res) => {
             const camp = req.body
@@ -98,15 +108,28 @@ async function run() {
         })
 
 
-        app.patch('/update-status/:id', async(req, res) =>{
+        app.patch('/update-status/:id', async (req, res) => {
             const id = req.params.id
-            const filter = {_id: new ObjectId(id)}
+            const filter = { _id: new ObjectId(id) }
             const updateDoc = {
                 $set: {
                     payment_status: "Paid"
                 }
             }
             const result = await registerCampCollection.updateOne(filter, updateDoc)
+            res.send(result)
+        })
+
+
+        app.patch('/payment-history/:id', async (req, res) => {
+            const id = req.params.id
+            const filter = { _id: new ObjectId(id) }
+            const updateDoc = {
+                $set: {
+                    confirmation_status: "Comfirmed"
+                }
+            }
+            const result = await paymentHistroy.updateOne(filter, updateDoc)
             res.send(result)
         })
 
@@ -120,14 +143,14 @@ async function run() {
         })
 
 
-        app.get('/camp-register/:id', async(req, res) =>{
+        app.get('/camp-register/:id', async (req, res) => {
             const id = req.params.id
-            const query = {_id: new ObjectId(id)}
+            const query = { _id: new ObjectId(id) }
             const result = await registerCampCollection.findOne(query)
             res.send(result)
         })
 
-        
+
 
         app.post('/popular-medical-camp', async (req, res) => {
             const item = req.body
