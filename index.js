@@ -123,7 +123,7 @@ async function run() {
 
         app.patch('/payment-history/:id', async (req, res) => {
             const id = req.params.id
-            const filter = { _id: new ObjectId(id) }
+            const filter = { camp_id: id }
             const updateDoc = {
                 $set: {
                     confirmation_status: "Comfirmed"
