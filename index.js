@@ -2,6 +2,7 @@ const express = require('express')
 const cors = require('cors')
 require('dotenv').config()
 const app = express()
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 const port = process.env.PORT || 5000
 
 
@@ -35,7 +36,7 @@ async function run() {
         const registerCampCollection = client.db("MedicalDB").collection("register-camp")
         const usersCollcetion = client.db("MedicalDB").collection("users")
         const feedbackCollection = client.db("MedicalDB").collection("feedback-and-rating")
-
+        const paymentHistroy = client.db("MedicalDB").collection("payment-history")
 
         app.post('/users', async (req, res) => {
             const user = req.body
@@ -94,7 +95,19 @@ async function run() {
             }
             const result = await registerCampCollection.updateOne(filter, updateDoc)
             res.send(result)
+        })
 
+
+        app.patch('/update-status/:id', async(req, res) =>{
+            const id = req.params.id
+            const filter = {_id: new ObjectId(id)}
+            const updateDoc = {
+                $set: {
+                    payment_status: "Paid"
+                }
+            }
+            const result = await registerCampCollection.updateOne(filter, updateDoc)
+            res.send(result)
         })
 
 
@@ -107,6 +120,14 @@ async function run() {
         })
 
 
+        app.get('/camp-register/:id', async(req, res) =>{
+            const id = req.params.id
+            const query = {_id: new ObjectId(id)}
+            const result = await registerCampCollection.findOne(query)
+            res.send(result)
+        })
+
+        
 
         app.post('/popular-medical-camp', async (req, res) => {
             const item = req.body
@@ -173,6 +194,29 @@ async function run() {
             const query = { _id: new ObjectId(id) }
             const result = await registerCampCollection.deleteOne(query)
             res.send(result)
+        })
+
+        app.post('/payment-history', async (req, res) => {
+            const history = req.body
+            const result = await paymentHistroy.insertOne(history)
+            res.send(result)
+        })
+
+        // payment intent
+
+        app.post("/create-payment-intent", async (req, res) => {
+            const { price } = req.body;
+            const amount = parseInt(price * 100);
+
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: "usd",
+                payment_method_types: ['card']
+            })
+
+            res.send({
+                clientSecret: paymentIntent.client_secret
+            })
         })
 
 
