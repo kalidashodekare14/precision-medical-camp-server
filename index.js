@@ -82,6 +82,14 @@ async function run() {
             res.send(result)
         })
 
+
+        app.get('/analytics/:email', async(req, res) =>{
+            const email = req.email
+            const query = {email: email}
+            const result  = await registerCampCollection.find(query).toArray()
+            res.send(result)
+        })
+
         app.get('/payment-history/:email', async (req, res) => {
             const email = req.email
             const query = {email: email}
