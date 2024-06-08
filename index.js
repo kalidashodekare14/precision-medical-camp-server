@@ -105,7 +105,6 @@ async function run() {
         })
 
         app.get('/popular-medical-camp', async (req, res) => {
-
             const result = await popularCollection.find().toArray()
             res.send(result)
         })
@@ -126,22 +125,22 @@ async function run() {
 
         app.get('/profile/:email', async (req, res) => {
             const email = req.params.email
-            const query = {email: email}
+            const query = { email: email }
             const result = await usersCollcetion.find(query).toArray()
             res.send(result)
         })
 
 
         app.get('/analytics/:email', async (req, res) => {
-            const email = req.email
-            const query = { email: email }
+            const email = req.params.email
+            const query = { participant_email: email }
             const result = await registerCampCollection.find(query).toArray()
             res.send(result)
         })
 
         app.get('/payment-history/:email', async (req, res) => {
-            const email = req.email
-            const query = { email: email }
+            const email = req.params.email
+            const query = { user_email: email }
             const result = await paymentHistroy.find(query).toArray()
             res.send(result)
         })
@@ -211,9 +210,14 @@ async function run() {
 
         // participent 
         app.get('/register-camp/:email', async (req, res) => {
-            const email = req.email
-            const query = { email: email }
+            const email = req.params.email
+            const query = { participant_email: email }
             const result = await registerCampCollection.find(query).toArray()
+            res.send(result)
+        })
+
+        app.get('/manage-register-camp', async(req, res)=>{
+            const result = await registerCampCollection.find().toArray()
             res.send(result)
         })
 
@@ -224,6 +228,18 @@ async function run() {
             const result = await registerCampCollection.findOne(query)
             res.send(result)
         })
+
+        app.get('/feedback-rating', async (req, res) => {
+            const result = await feedbackCollection.find().toArray()
+            res.send(result)
+        })
+
+
+
+
+
+
+
 
 
 
