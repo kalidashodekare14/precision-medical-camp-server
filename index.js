@@ -13,10 +13,6 @@ app.use(express.json())
 
 
 
-
-
-
-
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.USER_NAME}:${process.env.USER_PASS}@cluster0.iyb1ucb.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -218,7 +214,7 @@ async function run() {
             res.send(result)
         })
 
-        app.get('/manage-register-camp', async(req, res)=>{
+        app.get('/manage-register-camp', async (req, res) => {
             const result = await registerCampCollection.find().toArray()
             res.send(result)
         })
