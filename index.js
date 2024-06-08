@@ -1,6 +1,7 @@
 const express = require('express')
 const cors = require('cors')
 require('dotenv').config()
+const jwt = require('jsonwebtoken');
 const app = express()
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 const port = process.env.PORT || 5000
@@ -11,8 +12,7 @@ app.use(cors())
 app.use(express.json())
 
 
-// kalidashodekare14
-// SuKtoXdyUrqLx5X9
+
 
 
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
@@ -27,6 +27,36 @@ const client = new MongoClient(uri, {
     }
 });
 
+// middleware
+
+const verifyToken = (req, res, next) => {
+    console.log('inside verify token', req.headers.authorization)
+    if (!req.headers.authorization) {
+        return res.status(401).send({ message: 'unauthorize access' })
+    }
+    const token = req.headers.authorization.split(' ')[1]
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (error, decoded) => {
+        if (error) {
+            return res.status(401).send({ message: 'unauthorize access' })
+        }
+        req.decoded = decoded
+        next()
+    })
+
+}
+
+const verifyOrganizer = async (req, res, next) => {
+    const email = req.decoded.email;
+    const query = { email: email }
+    const user = await usersCollcetion.findOne(query);
+    const isOrganizer = user?.role === 'admin'
+    if (!isOrganizer) {
+        return res.status(403).send({ message: 'forbidden access' })
+    }
+    next()
+}
+
+
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
@@ -37,6 +67,14 @@ async function run() {
         const usersCollcetion = client.db("MedicalDB").collection("users")
         const feedbackCollection = client.db("MedicalDB").collection("feedback-and-rating")
         const paymentHistroy = client.db("MedicalDB").collection("payment-history")
+
+
+        app.post('/jwt', async (req, res) => {
+            const user = req.body
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+            res.send({ token })
+        })
+
 
         app.post('/users', async (req, res) => {
             const user = req.body
@@ -50,9 +88,12 @@ async function run() {
         })
 
         // Organizer instead of admin
-        app.get('/users/organizer/:email', async (req, res) => {
+        app.get('/users/organizer/:email', verifyToken, async (req, res) => {
             // DOTO: verify and email check
             const email = req.params.email
+            if (email !== req.decoded.email) {
+                return res.status(403).send({ message: 'forbidden access' })
+            }
             const query = { email: email }
             const user = await usersCollcetion.findOne(query)
             console.log(user)
@@ -64,6 +105,7 @@ async function run() {
         })
 
         app.get('/popular-medical-camp', async (req, res) => {
+
             const result = await popularCollection.find().toArray()
             res.send(result)
         })
@@ -82,17 +124,24 @@ async function run() {
             res.send(result)
         })
 
-
-        app.get('/analytics/:email', async(req, res) =>{
-            const email = req.email
+        app.get('/profile/:email', async (req, res) => {
+            const email = req.params.email
             const query = {email: email}
-            const result  = await registerCampCollection.find(query).toArray()
+            const result = await usersCollcetion.find(query).toArray()
+            res.send(result)
+        })
+
+
+        app.get('/analytics/:email', async (req, res) => {
+            const email = req.email
+            const query = { email: email }
+            const result = await registerCampCollection.find(query).toArray()
             res.send(result)
         })
 
         app.get('/payment-history/:email', async (req, res) => {
             const email = req.email
-            const query = {email: email}
+            const query = { email: email }
             const result = await paymentHistroy.find(query).toArray()
             res.send(result)
         })
@@ -138,6 +187,24 @@ async function run() {
                 }
             }
             const result = await paymentHistroy.updateOne(filter, updateDoc)
+            res.send(result)
+        })
+
+        app.put('/profile-update/:id', async (req, res) => {
+            const profile = req.body
+            const id = req.params.id
+            const filter = { _id: new ObjectId(id) }
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    name: profile.name,
+                    email: profile.email,
+                    address: profile.address,
+                    phone_number: profile.phone_number,
+                    image: profile.image
+                }
+            }
+            const result = await usersCollcetion.updateOne(filter, updateDoc, options)
             res.send(result)
         })
 
