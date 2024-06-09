@@ -27,32 +27,9 @@ const client = new MongoClient(uri, {
 
 // middleware
 
-const verifyToken = (req, res, next) => {
-    console.log('inside verify token', req.headers.authorization)
-    if (!req.headers.authorization) {
-        return res.status(401).send({ message: 'unauthorize access' })
-    }
-    const token = req.headers.authorization.split(' ')[1]
-    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (error, decoded) => {
-        if (error) {
-            return res.status(401).send({ message: 'unauthorize access' })
-        }
-        req.decoded = decoded
-        next()
-    })
 
-}
 
-const verifyOrganizer = async (req, res, next) => {
-    const email = req.decoded.email;
-    const query = { email: email }
-    const user = await usersCollcetion.findOne(query);
-    const isOrganizer = user?.role === 'admin'
-    if (!isOrganizer) {
-        return res.status(403).send({ message: 'forbidden access' })
-    }
-    next()
-}
+
 
 
 async function run() {
@@ -65,6 +42,37 @@ async function run() {
         const usersCollcetion = client.db("MedicalDB").collection("users")
         const feedbackCollection = client.db("MedicalDB").collection("feedback-and-rating")
         const paymentHistroy = client.db("MedicalDB").collection("payment-history")
+
+
+
+        const verifyToken = (req, res, next) => {
+            console.log('inside verify token', req.headers.authorization)
+            if (!req.headers.authorization) {
+                return res.status(401).send({ message: 'unauthorize access' })
+            }
+            const token = req.headers.authorization.split(' ')[1]
+            jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (error, decoded) => {
+                if (error) {
+                    return res.status(401).send({ message: 'unauthorize access' })
+                }
+                req.decoded = decoded
+                next()
+            })
+
+        }
+
+
+        const verifyOrganizer = async (req, res, next) => {
+            const email = req.decoded.email;
+            const query = { email: email }
+            const user = await usersCollcetion.findOne(query);
+            const isOrganizer = user?.role === 'admin'
+            if (!isOrganizer) {
+                return res.status(403).send({ message: 'forbidden access' })
+            }
+            next()
+        }
+
 
 
         app.post('/jwt', async (req, res) => {
@@ -87,7 +95,6 @@ async function run() {
 
         // Organizer instead of admin
         app.get('/users/organizer/:email', verifyToken, async (req, res) => {
-            // DOTO: verify and email check
             const email = req.params.email
             if (email !== req.decoded.email) {
                 return res.status(403).send({ message: 'forbidden access' })
@@ -129,8 +136,9 @@ async function run() {
         })
 
 
-        app.get('/analytics/:email', async (req, res) => {
+        app.get('/analytics/:email', verifyToken, async (req, res) => {
             const email = req.params.email
+            
             const query = { participant_email: email }
             const result = await registerCampCollection.find(query).toArray()
             res.send(result)
@@ -176,8 +184,6 @@ async function run() {
 
 
 
-        
-
         app.patch('/payment-history/:id', async (req, res) => {
             const id = req.params.id
             const filter = { camp_id: id }
@@ -210,7 +216,7 @@ async function run() {
 
 
         // participent 
-        app.get('/register-camp/:email', async (req, res) => {
+        app.get('/register-camp/:email', verifyToken, async (req, res) => {
             const email = req.params.email
             const query = { participant_email: email }
             const result = await registerCampCollection.find(query).toArray()
@@ -234,14 +240,6 @@ async function run() {
             const result = await feedbackCollection.find().toArray()
             res.send(result)
         })
-
-
-
-
-
-
-
-
 
 
         app.post('/popular-medical-camp', async (req, res) => {
@@ -337,7 +335,7 @@ async function run() {
 
 
         // Send a ping to confirm a successful connection
-        await client.db("admin").command({ ping: 1 });
+        // await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
         // Ensures that the client will close when you finish/error
